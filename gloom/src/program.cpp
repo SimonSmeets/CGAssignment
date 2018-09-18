@@ -1,45 +1,141 @@
 // Local headers
 #include "program.hpp"
 #include "gloom/gloom.hpp"
+#include "gloom/shader.hpp"
 
+
+
+
+unsigned int CreateVAO(float* vertices, unsigned int vertSize, int* indices, unsigned int indSize, float* colors, unsigned int colorSize);
 
 void runProgram(GLFWwindow* window)
 {
-    // Enable depth (Z) buffer (accept "closest" fragment)
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+	// Enable depth (Z) buffer (accept "closest" fragment)
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
-    // Configure miscellaneous OpenGL settings
-    glEnable(GL_CULL_FACE);
+	// Configure miscellaneous OpenGL settings
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // Set default colour after clearing the colour buffer
-    glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
+	// Set default colour after clearing the colour buffer
+	glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 
-    // Set up your scene here (create Vertex Array Objects, etc.)
+	// Set up your scene here (create Vertex Array Objects, etc.)
+	float vertices[30] ={-0.6f, -0.6f, 0.0f,
+						  -0.2f, -0.6f, 0.0f,
+						   0.2f, -0.6f, 0.0f,
+					       0.6f, -0.6f, 0.0f,
+						  -0.4f , -0.2f, 0.0f,
+						   0.0f , -0.2f, 0.0f, 
+						   0.4f , -0.2f, 0.0f,
+						  -0.2f , 0.2f, 0.0f,
+						   0.2f , 0.2f, 0.0f,
+						   0.0f,   0.6f, 0.0f
+						 };
+	
+	
+	
+	/* { 0.6f,-0.8f,-0.0f,
+						0.0f, 0.4f,0.0f,
+						-0.8f,-0.2f,0.0f };*/
 
-    // Rendering Loop
-    while (!glfwWindowShouldClose(window))
-    {
-        // Clear colour and depth buffers
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	int indices[18] = { 0,1,4 , 1,2,5 , 2,3,6 , 4,5,7 , 5,6,8 , 7,8,9};
 
-        // Draw your scene here
+	//{ 0,1,2};
+	float colors[36] = { 0.0f, 0.0f, 1.0f, 1.0f
+						,0.0f, 1.0f, 0.0f, 1.0f 
+						,1.0f, 0.0f, 0.0f, 1.0f 
+						,0.0f, 1.0f, 1.0f, 1.0f
+						,1.0f, 0.0f, 1.0f, 1.0f
+						,1.0f, 1.0f, 0.0f, 1.0f
+						,1.0f, 1.0f, 1.0f, 1.0f
+						,0.0f, 0.0f, 0.0f, 1.0f
+						,0.5f, 0.5f, 0.5f, 1.0f
+	};
+	
+	unsigned int vertLen = sizeof(vertices)/sizeof(float);
+	unsigned int indLen = sizeof(indices)/sizeof(int);
+	unsigned int colorLen = sizeof(colors) / sizeof(float);
 
-        // Handle other events
-        glfwPollEvents();
-        handleKeyboardInput(window);
+	unsigned int object = 0;
+	object = CreateVAO(vertices, vertLen, indices, indLen, colors, colorLen);
 
-        // Flip buffers
-        glfwSwapBuffers(window);
-    }
+	Gloom::Shader shader;
+	shader.makeBasicShader("C:\\Users\\Simon Smeets\\Documents\\Unief\\Erasmus\\TDT4195\\gloom\\gloom\\shaders\\simple.vert",
+						   "C:\\Users\\Simon Smeets\\Documents\\Unief\\Erasmus\\TDT4195\\gloom\\gloom\\shaders\\simple.frag");
+
+	
+	// Rendering Loop
+	while (!glfwWindowShouldClose(window))
+	{
+		// Clear colour and depth buffers
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Draw your scene here
+		shader.activate();
+		
+		glBindVertexArray(object);
+	
+		glDrawElements(GL_TRIANGLES, indLen, GL_UNSIGNED_INT, 0);
+		
+
+		shader.deactivate();
+		
+		// Handle other events
+		glfwPollEvents();
+		handleKeyboardInput(window);
+
+		// Flip buffers
+		glfwSwapBuffers(window);
+		
+	}
+	// destroy shader
+	shader.destroy();
 }
+	
 
 
 void handleKeyboardInput(GLFWwindow* window)
 {
-    // Use escape key for terminating the GLFW window
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, GL_TRUE);
-    }
+	// Use escape key for terminating the GLFW window
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
+}
+
+unsigned int CreateVAO(float* vertices, unsigned int vertSize, int* indices, unsigned int indSize, float* colors, unsigned int colorSize) {
+	unsigned int VAO = 0;
+	unsigned int VBO = 0;
+	unsigned int ColorVBO = 0;
+	unsigned int IndexBuffer = 0;
+
+
+	glGenVertexArrays(1, &VAO);
+
+	glBindVertexArray(VAO);
+
+	// create VBO
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertSize * sizeof(float), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3,GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+
+
+	// create color buffer
+	glGenBuffers(1, &ColorVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, ColorVBO);
+	glBufferData(GL_ARRAY_BUFFER, colorSize * sizeof(float), colors, GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(1);
+
+	// create index buffer
+	glGenBuffers(1, &IndexBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indSize * sizeof(int), indices, GL_STATIC_DRAW);
+
+	return VAO;
 }
