@@ -2,6 +2,11 @@
 #include "program.hpp"
 #include "gloom/gloom.hpp"
 #include "gloom/shader.hpp"
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/vec3.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 
 
@@ -23,25 +28,29 @@ void runProgram(GLFWwindow* window)
 	glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 
 	// Set up your scene here (create Vertex Array Objects, etc.)
-	float vertices[27] ={-0.6f, 0.0f, 0.0f,
-						  0.2f, 0.0f, 0.0f,
-						   -0.2f, 0.6f, 0.0f,
-					       -0.4f, 0.0f, -0.1f,
-						   0.4f , -0.0f, -0.1f,
-						   0.0f , 0.6f, -0.1f, 
-						   -0.2f , -0.0f, -0.8f,
-						  0.6f , 0.0f, -0.8f,
-						   0.2f , 0.6f, -0.8f,
+	float vertices[27] ={-0.6f,  0.0f,  0.0f,
+						  0.2f,  0.0f,  0.0f,
+						 -0.2f,  0.6f,  0.0f,
+					     
+						 -0.4f,  0.0f, 1.1f,
+					      0.4f, -0.0f, 1.1f,
+					      0.0f,  0.6f, 1.1f, 
+					    
+						 -0.2f, -0.0f, 1.8f,
+						  0.6f,  0.0f, 1.8f,
+					      0.2f,  0.6f, 1.8f,
 						  
 						 };
 	
 	
 	
 	/* { 0.6f,-0.8f,-0.0f,
-						0.0f, 0.4f,0.0f,
-						-0.8f,-0.2f,0.0f };*/
+		 0.0f, 0.4f,0.0f,
+	    -0.8f,-0.2f,0.0f };*/
 
-	int indices[9] = { 0,1,2   , 3,4,5, 6,7,8};
+	int indices[9] = { 0,1,2, 
+					   3,4,5, 
+					   6,7,8};
 
 	//{ 0,1,2};
 	float colors[36] = { 0.0f, 0.0f, 1.0f, 0.3f
@@ -57,11 +66,10 @@ void runProgram(GLFWwindow* window)
 						,0.0f, 1.0f, 0.0f, 0.3f
 	};
 	
-	float transfMatrix[16] ={ 5,0,0,0,
-							  0,1,0,0,
-							  0,0,1,0,
-							  0,0,0,1 };
 
+	
+	
+	
 	unsigned int vertLen = sizeof(vertices)/sizeof(float);
 	unsigned int indLen = sizeof(indices)/sizeof(int);
 	unsigned int colorLen = sizeof(colors) / sizeof(float);
@@ -69,7 +77,6 @@ void runProgram(GLFWwindow* window)
 	unsigned int object = 0;
 
 	
-
 
 	object = CreateVAO(vertices, vertLen, indices, indLen, colors, colorLen);
 
@@ -81,14 +88,20 @@ void runProgram(GLFWwindow* window)
 	// Rendering Loop
 	while (!glfwWindowShouldClose(window))
 	{
+		//clear Transformation matrix
+		glm::vec3 base = glm::vec3(1.0f, 1.0f, 1.0f);
+		glm::mat4x4 transfMatrix = glm::scale(base);
+		glm::mat4x4 proj = glm::perspective(2 / 3 * 3.14f, float(windowHeight / windowWidth), 1.0f, 100.0f);
+		transfMatrix = proj * transfMatrix;
+
+
 		// Clear colour and depth buffers
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw your scene here
 		shader.activate();
-		
 		glBindVertexArray(object);
-		glUniformMatrix4fv(1, 1, GL_TRUE, transfMatrix);
+		glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(transfMatrix));
 		glDrawElements(GL_TRIANGLES, indLen, GL_UNSIGNED_INT, 0);
 		
 

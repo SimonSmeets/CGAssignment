@@ -5,7 +5,7 @@ in vec4 color;
 
 out vec4 colorIn;
 
-uniform layout(position = 0) mat4 transfMat;
+uniform layout(location = 0) mat4 transfMat;
 
 void main()
 {
