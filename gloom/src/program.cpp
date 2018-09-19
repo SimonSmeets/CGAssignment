@@ -23,16 +23,16 @@ void runProgram(GLFWwindow* window)
 	glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 
 	// Set up your scene here (create Vertex Array Objects, etc.)
-	float vertices[30] ={-0.6f, -0.6f, 0.0f,
-						  -0.2f, -0.6f, 0.0f,
-						   0.2f, -0.6f, 0.0f,
-					       0.6f, -0.6f, 0.0f,
-						  -0.4f , -0.2f, 0.0f,
-						   0.0f , -0.2f, 0.0f, 
-						   0.4f , -0.2f, 0.0f,
-						  -0.2f , 0.2f, 0.0f,
-						   0.2f , 0.2f, 0.0f,
-						   0.0f,   0.6f, 0.0f
+	float vertices[27] ={-0.6f, 0.0f, 0.0f,
+						  0.2f, 0.0f, 0.0f,
+						   -0.2f, 0.6f, 0.0f,
+					       -0.4f, 0.0f, -0.1f,
+						   0.4f , -0.0f, -0.1f,
+						   0.0f , 0.6f, -0.1f, 
+						   -0.2f , -0.0f, -0.8f,
+						  0.6f , 0.0f, -0.8f,
+						   0.2f , 0.6f, -0.8f,
+						  
 						 };
 	
 	
@@ -41,25 +41,36 @@ void runProgram(GLFWwindow* window)
 						0.0f, 0.4f,0.0f,
 						-0.8f,-0.2f,0.0f };*/
 
-	int indices[18] = { 0,1,4 , 1,2,5 , 2,3,6 , 4,5,7 , 5,6,8 , 7,8,9};
+	int indices[9] = { 0,1,2   , 3,4,5, 6,7,8};
 
 	//{ 0,1,2};
-	float colors[36] = { 0.0f, 0.0f, 1.0f, 1.0f
-						,0.0f, 1.0f, 0.0f, 1.0f 
-						,1.0f, 0.0f, 0.0f, 1.0f 
-						,0.0f, 1.0f, 1.0f, 1.0f
-						,1.0f, 0.0f, 1.0f, 1.0f
-						,1.0f, 1.0f, 0.0f, 1.0f
-						,1.0f, 1.0f, 1.0f, 1.0f
-						,0.0f, 0.0f, 0.0f, 1.0f
-						,0.5f, 0.5f, 0.5f, 1.0f
+	float colors[36] = { 0.0f, 0.0f, 1.0f, 0.3f
+						,0.0f, 0.0f, 1.0f, 0.3f 
+						,0.0f, 0.0f, 1.0f, 0.3f 
+						
+						,1.0f, 0.0f, 0.0f, 0.3f
+						,1.0f, 0.0f, 0.0f, 0.3f
+						,1.0f, 0.0f, 0.0f, 0.3f
+						
+						,0.0f, 1.0f, 0.0f, 0.3f
+						,0.0f, 1.0f, 0.0f, 0.3f
+						,0.0f, 1.0f, 0.0f, 0.3f
 	};
 	
+	float transfMatrix[16] ={ 5,0,0,0,
+							  0,1,0,0,
+							  0,0,1,0,
+							  0,0,0,1 };
+
 	unsigned int vertLen = sizeof(vertices)/sizeof(float);
 	unsigned int indLen = sizeof(indices)/sizeof(int);
 	unsigned int colorLen = sizeof(colors) / sizeof(float);
 
 	unsigned int object = 0;
+
+	
+
+
 	object = CreateVAO(vertices, vertLen, indices, indLen, colors, colorLen);
 
 	Gloom::Shader shader;
@@ -77,7 +88,7 @@ void runProgram(GLFWwindow* window)
 		shader.activate();
 		
 		glBindVertexArray(object);
-	
+		glUniformMatrix4fv(1, 1, GL_TRUE, transfMatrix);
 		glDrawElements(GL_TRIANGLES, indLen, GL_UNSIGNED_INT, 0);
 		
 
