@@ -1,4 +1,5 @@
 // Local headers
+
 #include "program.hpp"
 #include "gloom/gloom.hpp"
 #include "gloom/shader.hpp"
@@ -6,7 +7,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/vec3.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <iostream>
+
 
 
 
@@ -28,19 +32,19 @@ void runProgram(GLFWwindow* window)
 	glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 
 	// Set up your scene here (create Vertex Array Objects, etc.)
-	float vertices[27] ={-0.6f,  0.0f,  0.0f,
-						  0.2f,  0.0f,  0.0f,
-						 -0.2f,  0.6f,  0.0f,
-					     
-						 -0.4f,  0.0f, 1.1f,
-					      0.4f, -0.0f, 1.1f,
-					      0.0f,  0.6f, 1.1f, 
-					    
-						 -0.2f, -0.0f, 1.8f,
-						  0.6f,  0.0f, 1.8f,
-					      0.2f,  0.6f, 1.8f,
-						  
-						 };
+	float vertices[27] = { 0.0f, 1.0f,-10.0f,
+						  -1.0f,-1.0f,-10.0f,
+						   1.0f,-1.0f,-10.0f,
+
+					  0.2f, 1.0f,-9.0f,
+					 -0.8f,-1.0f,-9.0f,
+					  1.2f,-1.0f,-9.0f,
+
+					  0.4f, 1.0f,-8.0f,
+					 -0.6f,-1.0f,-8.0f,
+					  1.4f,-1.0f,-8.0f
+
+	};
 	
 	
 	
@@ -77,23 +81,57 @@ void runProgram(GLFWwindow* window)
 	unsigned int object = 0;
 
 	
-
+	
 	object = CreateVAO(vertices, vertLen, indices, indLen, colors, colorLen);
 
 	Gloom::Shader shader;
-	shader.makeBasicShader("C:\\Users\\Simon Smeets\\Documents\\Unief\\Erasmus\\TDT4195\\gloom\\gloom\\shaders\\simple.vert",
-						   "C:\\Users\\Simon Smeets\\Documents\\Unief\\Erasmus\\TDT4195\\gloom\\gloom\\shaders\\simple.frag");
+	shader.makeBasicShader("..\\gloom\\shaders\\simple.vert",
+						   "..\\gloom\\shaders\\simple.frag");
 
+	/*glm::vec3 base = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec4 test = glm::vec4(0.0f, 1.0f, -10.0f, 1.0f);
+	glm::mat4x4 transfMatrix = glm::scale(base);
+	glm::mat4x4 proj = glm::perspective(45.0f, 1.0f, 1.0f, 100.0f);
+	glm::mat4x4 look = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	
+	transfMatrix = proj * look;
+
+	std::cout << glm::to_string(transfMatrix *test) << std::endl;
+	*/
+
+	float xTrans = 0;
+	float yTrans = 0;
+	float zTrans = 0;
+	float horRot = 0;
+	float vertRot = 0;
+	
+
 	// Rendering Loop
 	while (!glfwWindowShouldClose(window))
 	{
 		//clear Transformation matrix
 		glm::vec3 base = glm::vec3(1.0f, 1.0f, 1.0f);
 		glm::mat4x4 transfMatrix = glm::scale(base);
-		glm::mat4x4 proj = glm::perspective(2 / 3 * 3.14f, float(windowHeight / windowWidth), 1.0f, 100.0f);
-		transfMatrix = proj * transfMatrix;
 
+		// calculate projection matrix
+		glm::mat4x4 proj = glm::perspective(45.0f, 1.0f, 1.0f, 100.0f);
+		glm::mat4x4 look = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		transfMatrix =  proj * look * transfMatrix;
+		
+		//std::cout << glm::to_string(proj) << std::endl;
+
+
+		// calculate transformation matrix
+		glm::vec3 transVec = glm::vec3(xTrans, yTrans, zTrans);
+		glm::mat4x4 translation = glm::translate(transVec);
+		glm::mat4x4 horRotMat = glm::rotate(horRot, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4x4 vertRotMat = glm::rotate(vertRot, glm::vec3(1.0f, 0.0f, 0.0f));
+
+		glm::mat4x4 totalTranfMat = translation * vertRotMat * horRotMat ;
+
+		// apply and get final transfMatrix
+
+		transfMatrix = totalTranfMat * transfMatrix;
 
 		// Clear colour and depth buffers
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -109,8 +147,38 @@ void runProgram(GLFWwindow* window)
 		
 		// Handle other events
 		glfwPollEvents();
+		float speedControl = 180;
 		handleKeyboardInput(window);
-
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+			xTrans += 1.0f/speedControl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+			xTrans -= 1.0f / speedControl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+			zTrans -= 1.0f / speedControl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+			zTrans += 1.0f / speedControl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
+			yTrans += 1.0f / speedControl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+			yTrans -= 1.0f / speedControl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+			horRot += 1.0f / speedControl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+			horRot -= 1.0f / speedControl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+			vertRot += 1.0f / speedControl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+			vertRot -= 1.0f / speedControl;
+		}
 		// Flip buffers
 		glfwSwapBuffers(window);
 		
@@ -128,6 +196,8 @@ void handleKeyboardInput(GLFWwindow* window)
 	{
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
+
+
 }
 
 unsigned int CreateVAO(float* vertices, unsigned int vertSize, int* indices, unsigned int indSize, float* colors, unsigned int colorSize) {
