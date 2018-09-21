@@ -32,17 +32,17 @@ void runProgram(GLFWwindow* window)
 	glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 
 	// Set up your scene here (create Vertex Array Objects, etc.)
-	float vertices[27] = { 0.0f, 1.0f,-10.0f,
-						  -1.0f,-1.0f,-10.0f,
-						   1.0f,-1.0f,-10.0f,
+	float vertices[27] = { 0.0f, 1.0f,-20.0f,
+						  -1.0f,-1.0f,-20.0f,
+						   1.0f,-1.0f,-20.0f,
 
-					  0.2f, 1.0f,-9.0f,
-					 -0.8f,-1.0f,-9.0f,
-					  1.2f,-1.0f,-9.0f,
+					  0.2f, 1.0f,-15.0f,
+					 -0.8f,-1.0f,-15.0f,
+					  1.2f,-1.0f,-15.0f,
 
-					  0.4f, 1.0f,-8.0f,
-					 -0.6f,-1.0f,-8.0f,
-					  1.4f,-1.0f,-8.0f
+					  0.4f, 1.0f,-10.0f,
+					 -0.6f,-1.0f,-10.0f,
+					  1.4f,-1.0f,-10.0f
 
 	};
 	
@@ -116,7 +116,7 @@ void runProgram(GLFWwindow* window)
 		// calculate projection matrix
 		glm::mat4x4 proj = glm::perspective(45.0f, 1.0f, 1.0f, 100.0f);
 		glm::mat4x4 look = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		transfMatrix =  proj * look * transfMatrix;
+
 		
 		//std::cout << glm::to_string(proj) << std::endl;
 
@@ -127,11 +127,12 @@ void runProgram(GLFWwindow* window)
 		glm::mat4x4 horRotMat = glm::rotate(horRot, glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4x4 vertRotMat = glm::rotate(vertRot, glm::vec3(1.0f, 0.0f, 0.0f));
 
-		glm::mat4x4 totalTranfMat = translation * vertRotMat * horRotMat ;
+		glm::mat4x4 totalTranfMat =  vertRotMat * horRotMat * translation  ;
+
 
 		// apply and get final transfMatrix
 
-		transfMatrix = totalTranfMat * transfMatrix;
+		transfMatrix = proj * totalTranfMat * look * transfMatrix;
 
 		// Clear colour and depth buffers
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -147,37 +148,39 @@ void runProgram(GLFWwindow* window)
 		
 		// Handle other events
 		glfwPollEvents();
-		float speedControl = 180;
+		float speedControlTrans = 180;
+		float speedControlRot = 360;
 		handleKeyboardInput(window);
-		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-			xTrans += 1.0f/speedControl;
-		}
 		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-			xTrans -= 1.0f / speedControl;
+			xTrans -= 1.0f/speedControlTrans;
+		}
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+			xTrans += 1.0f / speedControlTrans;
 		}
 		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-			zTrans -= 1.0f / speedControl;
+			zTrans += 1.0f / speedControlTrans;
+
 		}
 		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-			zTrans += 1.0f / speedControl;
+			zTrans -= 1.0f / speedControlTrans;
 		}
 		if (glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
-			yTrans += 1.0f / speedControl;
+			yTrans += 1.0f / speedControlTrans;
 		}
 		if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
-			yTrans -= 1.0f / speedControl;
+			yTrans -= 1.0f / speedControlTrans;
 		}
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-			horRot += 1.0f / speedControl;
+			horRot -= 1.0f / speedControlRot;
 		}
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-			horRot -= 1.0f / speedControl;
+			horRot += 1.0f / speedControlRot;
 		}
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-			vertRot += 1.0f / speedControl;
+			vertRot += 1.0f / speedControlRot;
 		}
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-			vertRot -= 1.0f / speedControl;
+			vertRot -= 1.0f / speedControlRot;
 		}
 		// Flip buffers
 		glfwSwapBuffers(window);
