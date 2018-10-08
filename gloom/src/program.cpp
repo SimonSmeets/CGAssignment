@@ -10,12 +10,17 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
+#include <gloom/handout/sourceFiles/OBJLoader.hpp>
+#include <gloom/handout/sourceFiles/toolbox.hpp>
+#include <gloom/handout/sourceFiles/sceneGraph.hpp>
 
 
 
 
-
-unsigned int CreateVAO(float* vertices, unsigned int vertSize, int* indices, unsigned int indSize, float* colors, unsigned int colorSize);
+unsigned int CreateVAO(float* vertices, unsigned int vertSize, unsigned int* indices, unsigned int indSize, float* colors, unsigned int colorSize);
+unsigned int meshToVAO(Mesh mesh);
+SceneNode* constructSceneGraph(unsigned int groundVAO, unsigned int groundIndexCount, unsigned int characterVAO[], unsigned int characterIndexCount[]);
+void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time);
 
 void runProgram(GLFWwindow* window)
 {
@@ -32,7 +37,7 @@ void runProgram(GLFWwindow* window)
 	glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 
 	// Set up your scene here (create Vertex Array Objects, etc.)
-	float vertices[27] = { 0.0f, 1.0f,-20.0f,
+	/*float vertices[27] = { 0.0f, 1.0f,-20.0f,
 						  -1.0f,-1.0f,-20.0f,
 						   1.0f,-1.0f,-20.0f,
 
@@ -45,19 +50,19 @@ void runProgram(GLFWwindow* window)
 					  1.4f,-1.0f,-10.0f
 
 	};
-	
+	*/
 	
 	
 	/* { 0.6f,-0.8f,-0.0f,
 		 0.0f, 0.4f,0.0f,
 	    -0.8f,-0.2f,0.0f };*/
 
-	int indices[9] = { 0,1,2, 
+	/*int indices[9] = { 0,1,2, 
 					   3,4,5, 
 					   6,7,8};
-
+	*/
 	//{ 0,1,2};
-	float colors[36] = { 0.0f, 0.0f, 1.0f, 0.3f
+	/*float colors[36] = { 0.0f, 0.0f, 1.0f, 0.3f
 						,0.0f, 0.0f, 1.0f, 0.3f 
 						,0.0f, 0.0f, 1.0f, 0.3f 
 						
@@ -69,56 +74,64 @@ void runProgram(GLFWwindow* window)
 						,0.0f, 1.0f, 0.0f, 0.3f
 						,0.0f, 1.0f, 0.0f, 0.3f
 	};
-	
+	*/
 
 	
 	
-	
-	unsigned int vertLen = sizeof(vertices)/sizeof(float);
-	unsigned int indLen = sizeof(indices)/sizeof(int);
-	unsigned int colorLen = sizeof(colors) / sizeof(float);
 
-	unsigned int object = 0;
+	MinecraftCharacter Character;
+	std::string const model = "C:\\Users\\Simon Smeets\\Documents\\Unief\\Erasmus\\TDT4195\\gloom\\gloom\\handout\\res\\steve.obj";
+	Character = loadMinecraftCharacterModel(model);
 
-	
-	
-	object = CreateVAO(vertices, vertLen, indices, indLen, colors, colorLen);
+
+	Mesh meshes[6] = { Character.torso , Character.head,Character.leftArm ,Character.leftLeg ,Character.rightArm ,Character.rightLeg};
+	unsigned int object[] = { 0,0,0,0,0,0 };
+	unsigned int indlen[] = { 0,0,0,0,0,0 };
+	for (int i = 0; i < 6; i++) {
+		indlen[i] = meshes[i].indices.size();
+		object[i] = meshToVAO(meshes[i]);
+
+	}
+
+
+
+	Mesh groundMesh = generateChessboard(10, 10, 10, float4(1, 0, 0, 1), float4(0, 1, 0, 1));
+	unsigned int ground = meshToVAO(groundMesh);
+	unsigned int groundindLen = groundMesh.indices.size();
+
+	SceneNode* Scenegraph;
+	Scenegraph = constructSceneGraph(ground, groundindLen, object, indlen);
 
 	Gloom::Shader shader;
 	shader.makeBasicShader("..\\gloom\\shaders\\simple.vert",
 						   "..\\gloom\\shaders\\simple.frag");
 
-	/*glm::vec3 base = glm::vec3(1.0f, 1.0f, 1.0f);
-	glm::vec4 test = glm::vec4(0.0f, 1.0f, -10.0f, 1.0f);
-	glm::mat4x4 transfMatrix = glm::scale(base);
-	glm::mat4x4 proj = glm::perspective(45.0f, 1.0f, 1.0f, 100.0f);
-	glm::mat4x4 look = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	
-	transfMatrix = proj * look;
 
-	std::cout << glm::to_string(transfMatrix *test) << std::endl;
-	*/
 
 	float xTrans = 0;
 	float yTrans = 0;
 	float zTrans = 0;
 	float horRot = 0;
 	float vertRot = 0;
-	
+	float time = 0;
 
 	// Rendering Loop
 	while (!glfwWindowShouldClose(window))
 	{
+		//update time
+
+		time += getTimeDeltaSeconds();
+
 		//clear Transformation matrix
 		glm::vec3 base = glm::vec3(1.0f, 1.0f, 1.0f);
 		glm::mat4x4 transfMatrix = glm::scale(base);
 
+
 		// calculate projection matrix
-		glm::mat4x4 proj = glm::perspective(45.0f, 1.0f, 1.0f, 100.0f);
+		glm::mat4x4 proj = glm::perspective(45.0f, 1.0f, 1.0f, 500.0f);
 		glm::mat4x4 look = glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		
-		//std::cout << glm::to_string(proj) << std::endl;
 
 
 		// calculate transformation matrix
@@ -127,7 +140,7 @@ void runProgram(GLFWwindow* window)
 		glm::mat4x4 horRotMat = glm::rotate(horRot, glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::mat4x4 vertRotMat = glm::rotate(vertRot, glm::vec3(1.0f, 0.0f, 0.0f));
 
-		glm::mat4x4 totalTranfMat =  vertRotMat * horRotMat * translation  ;
+		glm::mat4x4 totalTranfMat =  vertRotMat  * translation * horRotMat;
 
 
 		// apply and get final transfMatrix
@@ -139,13 +152,12 @@ void runProgram(GLFWwindow* window)
 
 		// Draw your scene here
 		shader.activate();
-		glBindVertexArray(object);
-		glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(transfMatrix));
-		glDrawElements(GL_TRIANGLES, indLen, GL_UNSIGNED_INT, 0);
-		
+
+		visitSceneNode(Scenegraph, transfMatrix, time);
 
 		shader.deactivate();
-		
+
+
 		// Handle other events
 		glfwPollEvents();
 		float speedControlTrans = 180;
@@ -190,8 +202,6 @@ void runProgram(GLFWwindow* window)
 	shader.destroy();
 }
 	
-
-
 void handleKeyboardInput(GLFWwindow* window)
 {
 	// Use escape key for terminating the GLFW window
@@ -203,7 +213,7 @@ void handleKeyboardInput(GLFWwindow* window)
 
 }
 
-unsigned int CreateVAO(float* vertices, unsigned int vertSize, int* indices, unsigned int indSize, float* colors, unsigned int colorSize) {
+unsigned int CreateVAO(float* vertices, unsigned int vertSize, unsigned int* indices, unsigned int indSize, float* colors, unsigned int colorSize) {
 	unsigned int VAO = 0;
 	unsigned int VBO = 0;
 	unsigned int ColorVBO = 0;
@@ -236,3 +246,113 @@ unsigned int CreateVAO(float* vertices, unsigned int vertSize, int* indices, uns
 
 	return VAO;
 }
+
+unsigned int meshToVAO(Mesh mesh) {
+	std::vector<float3> vert;
+	vert.resize(0);
+	for (int j = 0; j < mesh.vertices.size(); j++) {
+		vert.push_back(mesh.vertices[j].toFloat3());
+	}
+
+
+	unsigned int vertLen = vert.size() * 3;
+	unsigned int indLen = mesh.indices.size();
+
+	unsigned int colorLen = mesh.colours.size() * 4;
+
+	return CreateVAO(&vert[0].x, vertLen, mesh.indices.data(), indLen, &mesh.colours[0].x, colorLen);
+
+}
+
+SceneNode* constructSceneGraph(unsigned int groundVAO, unsigned int groundIndexCount, unsigned int characterVAO[], unsigned int characterIndexCount[]) {
+
+	//// hierarchy setup
+	// root node of graph
+	SceneNode* rootNode = createSceneNode();
+	// children of root node
+	SceneNode* GroundNode = createSceneNode();
+	SceneNode* TorsoNode = createSceneNode();
+	addChild(rootNode, GroundNode);
+	addChild(rootNode, TorsoNode);
+	// children of Torso node
+	SceneNode* HeadNode = createSceneNode();
+	SceneNode* LeftArmNode = createSceneNode();
+	SceneNode* LeftLegNode = createSceneNode();
+	SceneNode* RightArmNode = createSceneNode();
+	SceneNode* RightLegNode = createSceneNode();
+
+	addChild(TorsoNode, HeadNode);
+	addChild(TorsoNode, LeftArmNode);
+	addChild(TorsoNode, LeftLegNode);
+	addChild(TorsoNode, RightArmNode);
+	addChild(TorsoNode, RightLegNode);
+
+	//// Initialization
+
+	//start without translation or rotation, just set VAO's and indexcounts
+
+	GroundNode->VAOIndexCount = groundIndexCount;
+	GroundNode->vertexArrayObjectID = groundVAO;
+
+	TorsoNode->VAOIndexCount = characterIndexCount[0];
+	TorsoNode->vertexArrayObjectID = characterVAO[0];
+
+	HeadNode->VAOIndexCount = characterIndexCount[1];
+	HeadNode->vertexArrayObjectID = characterVAO[1];
+
+	LeftArmNode->vertexArrayObjectID = characterVAO[2];
+	LeftArmNode->VAOIndexCount = characterIndexCount[2];
+
+	LeftLegNode->VAOIndexCount = characterIndexCount[3];
+	LeftLegNode->vertexArrayObjectID = characterVAO[3];
+
+	RightArmNode->VAOIndexCount = characterIndexCount[4];
+	RightArmNode->vertexArrayObjectID = characterVAO[4];
+
+	RightLegNode->VAOIndexCount = characterIndexCount[5];
+	RightLegNode->vertexArrayObjectID = characterVAO[5];
+
+
+	//set reference points
+	TorsoNode->referencePoint = float3(0, 12, 0);
+	HeadNode->referencePoint = float3(0, 24, 0);
+	LeftArmNode->referencePoint = float3(4, 24, 0);
+	LeftLegNode->referencePoint = float3(2, 12, 0);
+	RightArmNode->referencePoint = float3(-4, 24, 0);
+	RightLegNode->referencePoint = float3(-2, 12, 0);
+
+	return rootNode;
+}
+
+
+void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time) {
+	
+	// Do transformations here
+	glm::mat4 transl = glm::translate(glm::vec3(-node->referencePoint.x, -node->referencePoint.y, -node->referencePoint.z));
+	glm::mat4 rot = glm::rotate(node->rotation.z, glm::vec3(0, 0, 1)) * glm::rotate(node->rotation.x, glm::vec3(1, 0, 0)) * glm::rotate(node->rotation.y, glm::vec3(0, 1, 0));
+	glm::mat4 translInv = glm::translate(glm::vec3(node->referencePoint.x, node->referencePoint.y, node->referencePoint.z));
+	glm::mat4 totalRot = translInv * rot * transl;
+
+	glm::mat4 translation = glm::translate(glm::vec3(node->position.x, node->position.y, node->position.z));
+
+	glm::mat4 combinedTransformation = translation * totalRot * transformationThusFar;
+	// Do rendering here
+
+	if (node->vertexArrayObjectID == 3) {
+		node->rotation.x = sin(time) /90.0f;
+	}
+
+
+	glBindVertexArray(node->vertexArrayObjectID);
+	glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(combinedTransformation));
+	glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, 0);
+
+
+
+
+
+	for (SceneNode* child : node->children) {
+		visitSceneNode(child, combinedTransformation, time);
+	}
+}
+
