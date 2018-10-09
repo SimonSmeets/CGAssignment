@@ -104,7 +104,7 @@ double getTimeDeltaSeconds() {
 }
 
 float toRadians(float angleDegrees) {
-    return angleDegrees * (float(3.14) / 180.0f);
+    return angleDegrees * (float(3.1415629) / 180.0f);
 }
 
 // Reads a text file containing 2D integer coordinates in a specific format

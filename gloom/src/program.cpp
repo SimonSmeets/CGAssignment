@@ -20,7 +20,7 @@
 unsigned int CreateVAO(float* vertices, unsigned int vertSize, unsigned int* indices, unsigned int indSize, float* colors, unsigned int colorSize);
 unsigned int meshToVAO(Mesh mesh);
 SceneNode* constructSceneGraph(unsigned int groundVAO, unsigned int groundIndexCount, unsigned int characterVAO[], unsigned int characterIndexCount[]);
-void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time);
+void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time, float timeDelta, Path path);
 
 void runProgram(GLFWwindow* window)
 {
@@ -114,13 +114,14 @@ void runProgram(GLFWwindow* window)
 	float horRot = 0;
 	float vertRot = 0;
 	float time = 0;
+	Path path = Path("..\\coordinates_0.txt");
 
 	// Rendering Loop
 	while (!glfwWindowShouldClose(window))
 	{
 		//update time
-
-		time += getTimeDeltaSeconds();
+		float timeDelta = getTimeDeltaSeconds();
+		time += timeDelta;
 
 		//clear Transformation matrix
 		glm::vec3 base = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -153,7 +154,11 @@ void runProgram(GLFWwindow* window)
 		// Draw your scene here
 		shader.activate();
 
-		visitSceneNode(Scenegraph, transfMatrix, time);
+		visitSceneNode(Scenegraph, transfMatrix, time, timeDelta, path);
+		if (path.hasWaypointBeenReached(float2(Scenegraph->children[1]->position.x, Scenegraph->children[1]->position.z), 10.0)) {
+			path.advanceToNextWaypoint();
+			std::cout << Scenegraph->children[1]->rotation.y << "\n";
+		}
 
 		shader.deactivate();
 
@@ -316,16 +321,16 @@ SceneNode* constructSceneGraph(unsigned int groundVAO, unsigned int groundIndexC
 	//set reference points
 	TorsoNode->referencePoint = float3(0, 12, 0);
 	HeadNode->referencePoint = float3(0, 24, 0);
-	LeftArmNode->referencePoint = float3(4, 24, 0);
-	LeftLegNode->referencePoint = float3(2, 12, 0);
-	RightArmNode->referencePoint = float3(-4, 24, 0);
-	RightLegNode->referencePoint = float3(-2, 12, 0);
+	LeftArmNode->referencePoint = float3(-4, 24, 0);
+	LeftLegNode->referencePoint = float3(-2, 12, 0);
+	RightArmNode->referencePoint = float3(4, 24, 0);
+	RightLegNode->referencePoint = float3(2, 12, 0);
 
 	return rootNode;
 }
 
 
-void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time) {
+void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time , float timeDelta, Path path) {
 	
 	// Do transformations here
 	glm::mat4 transl = glm::translate(glm::vec3(-node->referencePoint.x, -node->referencePoint.y, -node->referencePoint.z));
@@ -335,12 +340,50 @@ void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time
 
 	glm::mat4 translation = glm::translate(glm::vec3(node->position.x, node->position.y, node->position.z));
 
-	glm::mat4 combinedTransformation = translation * totalRot * transformationThusFar;
+	glm::mat4 combinedTransformation =  transformationThusFar * translation * totalRot ;
 	// Do rendering here
 
-	if (node->vertexArrayObjectID == 3) {
-		node->rotation.x = sin(time) /90.0f;
+	if (node->vertexArrayObjectID == 1) {
+		
+		
+		
+		
+		
+
+		float2 nextTarget = path.getCurrentWaypoint(10.0);
+		float2 vector = nextTarget - float2(node->position.x, node->position.z);
+		glm::vec2 norm =glm::normalize( glm::vec2(vector.x, vector.y));
+		node->position = float3(node->position.x + norm.x * timeDelta*2,node->position.y , node->position.z + norm.y * timeDelta*2);
+	
+	
+		glm::vec2 vecx = glm::vec2(1.0, 0);
+		float angle = asin(dot(norm, vecx));
+
+		node->rotation.y = angle;
+
+
+		node->rotation.y += sin(time) / 8;
+	
 	}
+
+
+
+		
+
+	if (node->vertexArrayObjectID == 3) {
+		node->rotation.x = sin(time) /2;
+	}
+	if (node->vertexArrayObjectID == 5) {
+		node->rotation.x = -sin(time) / 2;
+	}
+	if (node->vertexArrayObjectID == 6) {
+		node->rotation.x = sin(time) / 2;
+	}
+	if (node->vertexArrayObjectID == 4) {
+		node->rotation.x = -sin(time) / 2;
+	}
+	
+
 
 
 	glBindVertexArray(node->vertexArrayObjectID);
@@ -352,7 +395,8 @@ void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time
 
 
 	for (SceneNode* child : node->children) {
-		visitSceneNode(child, combinedTransformation, time);
+		visitSceneNode(child, combinedTransformation, time, timeDelta, path);
 	}
-}
+}
+
 
