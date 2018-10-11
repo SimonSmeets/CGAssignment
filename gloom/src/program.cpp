@@ -345,11 +345,6 @@ void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time
 
 	if (node->vertexArrayObjectID == 1) {
 		
-		
-		
-		
-		
-
 		float2 nextTarget = path.getCurrentWaypoint(10.0);
 		float2 vector = nextTarget - float2(node->position.x, node->position.z);
 		glm::vec2 norm =glm::normalize( glm::vec2(vector.x, vector.y));
@@ -357,7 +352,11 @@ void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time
 	
 	
 		glm::vec2 vecx = glm::vec2(1.0, 0);
-		float angle = asin(dot(norm, vecx));
+		
+		float angle = atan(norm.x / norm.y);
+		if (norm.y < 0) {
+			angle += 3.14;
+		}
 
 		node->rotation.y = angle;
 
@@ -385,11 +384,11 @@ void visitSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time
 	
 
 
-
-	glBindVertexArray(node->vertexArrayObjectID);
-	glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(combinedTransformation));
-	glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, 0);
-
+	if (node->vertexArrayObjectID != -1) {
+		glBindVertexArray(node->vertexArrayObjectID);
+		glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(combinedTransformation));
+		glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, 0);
+	}
 
 
 
